@@ -15,6 +15,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -60,7 +61,7 @@ public class MinioTemplate {
         getMinioClient().removeBucket(bucketName);
     }
 
-    public List<MinioItem> getAllObjectsByPrefix(String bucketName, String prefix, boolean recursive) throws InvalidPortException, InvalidEndpointException{
+    public List<MinioItem> getAllObjectsByPrefix(String bucketName, String prefix, boolean recursive) throws Exception{
         List objectList = new ArrayList();
         Iterable<Result<Item>> objectsIterator = getMinioClient().listObjects(bucketName, prefix, recursive);
         objectsIterator.forEach(i -> {
@@ -81,7 +82,11 @@ public class MinioTemplate {
         return getMinioClient().presignedGetObject(bucketName, objectName, expires);
     }
 
-    public void saveObject(String bucketName, String objectName, InputStream stream, long size, String contentType) throws InvalidPortException, InvalidEndpointException, IOException, InvalidKeyException, NoSuchAlgorithmException, InsufficientDataException, InvalidArgumentException, InternalException, NoResponseException, InvalidBucketNameException, XmlPullParserException, ErrorResponseException {
+    public void saveObject(String bucketName, String objectName, InputStream stream, long size, Map<String, String> headersMap) throws Exception {
+        getMinioClient().putObject(bucketName, objectName, stream, size, headersMap);
+    }
+
+    public void saveObject(String bucketName, String objectName, InputStream stream, long size, String contentType) throws Exception {
         getMinioClient().putObject(bucketName, objectName, stream, size, contentType);
     }
 

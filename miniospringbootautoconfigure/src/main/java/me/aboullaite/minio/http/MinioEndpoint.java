@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.xmlpull.v1.XmlPullParserException;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -63,7 +64,7 @@ public class MinioEndpoint {
      */
 
     @PostMapping("/object/{bucketName}")
-    public MinioObject createObject(@RequestBody MultipartFile object, @PathVariable String bucketName) throws IOException, InvalidKeyException, NoSuchAlgorithmException, XmlPullParserException, InvalidPortException, ErrorResponseException, InternalException, NoResponseException, InvalidBucketNameException, InsufficientDataException, InvalidEndpointException, RegionConflictException, InvalidArgumentException {
+    public MinioObject createObject(@RequestBody MultipartFile object, @PathVariable String bucketName) throws Exception {
         String name = object.getOriginalFilename();
         template.saveObject(bucketName, name, object.getInputStream(), object.getSize(), object.getContentType());
         return new MinioObject(template.getObjectInfo(bucketName, name));
@@ -71,15 +72,18 @@ public class MinioEndpoint {
     }
 
     @PostMapping("/object/{bucketName}/{objectName}")
-    public MinioObject createObject(@RequestBody MultipartFile object, @PathVariable String bucketName, @PathVariable String objectName) throws IOException, InvalidKeyException, NoSuchAlgorithmException, XmlPullParserException, InvalidPortException, ErrorResponseException, InternalException, NoResponseException, InvalidBucketNameException, InsufficientDataException, InvalidEndpointException, RegionConflictException, InvalidArgumentException {
-        template.saveObject(bucketName, objectName, object.getInputStream(), object.getSize(), object.getContentType());
+//    public MinioObject createObject(@RequestParam("file") MultipartFile object, @PathVariable String bucketName, @PathVariable String objectName) throws Exception {
+    public MinioObject createObject(HttpServletRequest request, @RequestParam("file") MultipartFile object, @PathVariable String bucketName, @PathVariable String objectName) throws Exception {
+        Map<String, String> metadata = new HashMap<>();
+        request.getParameterMap().forEach((String k, String[] v) -> metadata.put("x-amz-meta-"+k, v[0]));
+        template.saveObject(bucketName, objectName, object.getInputStream(), object.getSize(), metadata);
         return new MinioObject(template.getObjectInfo(bucketName, objectName));
 
     }
 
 
     @GetMapping("/object/{bucketName}/{objectName}")
-    public  List<MinioItem>  filterObject(@PathVariable String bucketName, @PathVariable String objectName) throws InvalidPortException, InvalidEndpointException {
+    public  List<MinioItem> filterObject(@PathVariable String bucketName, @PathVariable String objectName) throws Exception {
 
         return template.getAllObjectsByPrefix(bucketName, objectName, true);
 
